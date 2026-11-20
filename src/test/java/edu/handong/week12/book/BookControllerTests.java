@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +32,21 @@ class BookControllerTests {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired BookRepository repository;
+
+    @Test
+    void openApiAndSwaggerUiAreAvailable() throws Exception {
+        mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/books'].get.summary").value("도서 목록 조회"))
+                .andExpect(jsonPath("$.paths['/api/books'].post.summary").value("도서 등록"))
+                .andExpect(jsonPath("$.paths['/api/books'].post.responses['201']").exists());
+        mvc.perform(get("/swagger-ui.html"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/swagger-ui/index.html"));
+        mvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("swagger-ui")));
+    }
 
     @Test
     void readsAndUpdatesBookThroughDtosAndDeletesBook() throws Exception {

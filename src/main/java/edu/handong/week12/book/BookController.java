@@ -2,7 +2,11 @@ package edu.handong.week12.book;
 
 import edu.handong.week12.DTO.BookRequest;
 import edu.handong.week12.DTO.BookResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
+@Tag(name = "Books", description = "도서 등록·조회·수정·삭제 API")
 public class BookController {
     private final BookService service;
 
@@ -24,7 +29,8 @@ public class BookController {
     }
 
     @GetMapping
-    public Page<BookResponse> list(Pageable pageable) {
+    @Operation(summary = "도서 목록 조회", description = "page, size, sort로 페이징·정렬합니다. 예: sort=price,desc")
+    public Page<BookResponse> list(@ParameterObject Pageable pageable) {
         return service.findAll(pageable).map(BookResponse::from);
     }
 
@@ -34,6 +40,8 @@ public class BookController {
     }
 
     @PostMapping
+    @Operation(summary = "도서 등록", description = "제목·저자·가격으로 책을 등록하고 서버가 생성한 ID를 반환합니다.")
+    @ApiResponse(responseCode = "201", description = "도서 등록 성공")
     public ResponseEntity<BookResponse> create(@Valid @RequestBody BookRequest request) {
         Book saved = service.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(BookResponse.from(saved));
