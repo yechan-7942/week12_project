@@ -64,7 +64,8 @@ class BookControllerTests {
         assertEquals(20000, updated.getPrice());
 
         mvc.perform(delete("/api/books/{id}", id))
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
         assertFalse(repository.existsById(id));
     }
 
