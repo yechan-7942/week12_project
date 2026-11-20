@@ -25,9 +25,9 @@ public class BookService {
     return repository.save(book);
   }
 
-  public Book update(Long id, Book input) {
+  public Book update(Long id, BookRequest request) {
     Book book = findById(id);
-    book.update(input.getTitle(), input.getAuthor(), input.getPrice());
+    book.update(request.title(), request.author(), request.price());
     return repository.save(book);
   }
 

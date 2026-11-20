@@ -18,13 +18,13 @@ public class BookController {
     }
 
     @GetMapping
-    public List<Book> list() {
-        return service.findAll();
-    } // TODO: Pageable
+    public List<BookResponse> list() {
+        return service.findAll().stream().map(BookResponse::from).toList();
+    }
 
     @GetMapping("/{id}")
-    public Book get(@PathVariable Long id) {
-        return service.findById(id);
+    public BookResponse get(@PathVariable Long id) {
+        return BookResponse.from(service.findById(id));
     }
 
     @PostMapping
@@ -32,9 +32,10 @@ public class BookController {
         Book saved = service.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(BookResponse.from(saved));
     }
+
     @PutMapping("/{id}")
-    public Book update(@PathVariable Long id, @RequestBody Book input) {
-        return service.update(id, input);
+    public BookResponse update(@PathVariable Long id, @RequestBody BookRequest request) {
+        return BookResponse.from(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
