@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,9 +39,12 @@ class BookControllerTests {
 
         mvc.perform(get("/api/books"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("""
-                        [{"id":%d,"title":"Original","author":"Author","price":10000}]
-                        """.formatted(id), true));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(id))
+                .andExpect(jsonPath("$.content[0].title").value("Original"))
+                .andExpect(jsonPath("$.content[0].author").value("Author"))
+                .andExpect(jsonPath("$.content[0].price").value(10000))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         mvc.perform(get("/api/books/{id}", id))
                 .andExpect(status().isOk())
@@ -67,6 +71,41 @@ class BookControllerTests {
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
         assertFalse(repository.existsById(id));
+    }
+
+    @Test
+    void listPaginatesAndSortsByPriceDescending() throws Exception {
+        for (int price : new int[]{300, 100, 700, 200, 500, 400, 600}) {
+            repository.save(new Book("Book " + price, "Author", price));
+        }
+
+        mvc.perform(get("/api/books").param("page", "0").param("size", "5").param("sort", "price,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].price").value(contains(700, 600, 500, 400, 300)))
+                .andExpect(jsonPath("$.totalElements").value(7))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(5));
+
+        mvc.perform(get("/api/books").param("page", "1").param("size", "5").param("sort", "price,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].price").value(contains(200, 100)))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.last").value(true));
+
+        mvc.perform(get("/api/books").param("page", "2").param("size", "5").param("sort", "price,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(7));
+    }
+
+    @Test
+    void listReturnsEmptyPageWhenNoBooksExist() throws Exception {
+        mvc.perform(get("/api/books").param("page", "0").param("size", "5").param("sort", "price,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
     }
 
     @Test

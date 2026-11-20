@@ -14,6 +14,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:book-validation-test;MODE=MariaDB;DB_CLOSE_DELAY=-1",
@@ -42,9 +44,45 @@ class BookValidationTests {
         long count = repository.count();
 
         mvc.perform(post("/api/books").contentType(APPLICATION_JSON).content(json))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").isNotEmpty());
         mvc.perform(put("/api/books/{id}", book.getId()).contentType(APPLICATION_JSON).content(json))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+
+        assertEquals(count, repository.count());
+        Book unchanged = repository.findById(book.getId()).orElseThrow();
+        assertEquals("Original", unchanged.getTitle());
+        assertEquals("Author", unchanged.getAuthor());
+        assertEquals(100, unchanged.getPrice());
+    }
+
+    @Test
+    void negativePriceReturnsHelpfulMessage() throws Exception {
+        mvc.perform(post("/api/books").contentType(APPLICATION_JSON)
+                        .content("{\"title\":\"Book\",\"author\":\"Author\",\"price\":-1000}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("price: 가격은 0 이상이어야 합니다."));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{", "", "{\"title\":\"Book\",\"author\":\"Author\",\"price\":\"invalid\"}"})
+    void invalidJsonReturnsCommon400Response(String json) throws Exception {
+        Book book = repository.save(new Book("Original", "Author", 100));
+        long count = repository.count();
+
+        mvc.perform(post("/api/books").contentType(APPLICATION_JSON).content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_JSON"))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+        mvc.perform(put("/api/books/{id}", book.getId()).contentType(APPLICATION_JSON).content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_JSON"))
+                .andExpect(jsonPath("$.message").isNotEmpty());
 
         assertEquals(count, repository.count());
         Book unchanged = repository.findById(book.getId()).orElseThrow();

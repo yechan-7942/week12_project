@@ -1,10 +1,11 @@
 package edu.handong.week12.book;
 
 import edu.handong.week12.DTO.BookRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.List;
 
 @Service
 public class BookService {
@@ -14,9 +15,9 @@ public class BookService {
     this.repository = repository;
   }
 
-  public List<Book> findAll() {
-    return repository.findAll();
-  } // TODO STEP 6: Pagination/Sorting
+  public Page<Book> findAll(Pageable pageable) {
+    return repository.findAll(pageable);
+  }
 
   public Book findById(Long id) {
     return repository.findById(id).orElseThrow(() ->
