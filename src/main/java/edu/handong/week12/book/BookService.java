@@ -1,5 +1,6 @@
 package edu.handong.week12.book;
 
+import edu.handong.week12.DTO.BookRequest;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -19,9 +20,10 @@ public class BookService {
     return repository.findById(id).orElseThrow();
   } // TODO STEP 5: 404
 
-  public Book create(Book book) {
+  public Book create(BookRequest request) {
+    Book book = new Book(request.title(), request.author(), request.price());
     return repository.save(book);
-  } // TODO STEP 3: DTO
+  }
 
   public Book update(Long id, Book input) {
     Book book = findById(id);
