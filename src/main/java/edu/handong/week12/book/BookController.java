@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -43,5 +44,17 @@ public class BookController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    public record ErrorResponse(String code, String message) {
+    }
+
+    @RestControllerAdvice
+    public static class ErrorHandler {
+        @ExceptionHandler(ResponseStatusException.class)
+        public ResponseEntity<ErrorResponse> handleNotFound(ResponseStatusException exception) {
+            return ResponseEntity.status(exception.getStatusCode())
+                    .body(new ErrorResponse("BOOK_NOT_FOUND", exception.getReason()));
+        }
     }
 }
