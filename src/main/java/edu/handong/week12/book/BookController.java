@@ -39,12 +39,12 @@ public class BookController {
         return BookResponse.from(service.findById(id));
     }
 
-    @PostMapping
-    @Operation(summary = "도서 등록", description = "제목·저자·가격으로 책을 등록하고 서버가 생성한 ID를 반환합니다.")
+    @PostMapping//api/books 요청을 처리한다.
+    @Operation(summary = "도서 등록", description = "제목·저자·가격으로 책을 등록하고 서버가 생성한 ID를 반환합니다.") //
     @ApiResponse(responseCode = "201", description = "도서 등록 성공")
-    public ResponseEntity<BookResponse> create(@Valid @RequestBody BookRequest request) {
-        Book saved = service.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(BookResponse.from(saved));
+    public ResponseEntity<BookResponse> create(@Valid @RequestBody BookRequest request) {//요청 JSON을 BookRequest DTO로 받고, @Valid로 제목·저자·가격의 유효성을 검사한다.
+        Book saved = service.create(request);// Service에 저장을 요청하고 저장된 Book을 받는다
+        return ResponseEntity.status(HttpStatus.CREATED).body(BookResponse.from(saved));// Book을 응답 DTO로 변환하고, 상태 코드 201과 함께 반환한다.
     }
 
     @PutMapping("/{id}")
