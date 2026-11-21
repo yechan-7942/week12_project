@@ -28,10 +28,10 @@ public class BookController {
         this.service = service;
     }
 
-    @GetMapping
+    @GetMapping// GET /api/books 요청을 처리한다.
     @Operation(summary = "도서 목록 조회", description = "page, size, sort로 페이징·정렬합니다. 예: sort=price,desc")
-    public Page<BookResponse> list(@ParameterObject Pageable pageable) {
-        return service.findAll(pageable).map(BookResponse::from);
+    public Page<BookResponse> list(@ParameterObject Pageable pageable) { // 페이지 번호, 크기, 정렬 조건을 Pageable로 받는다
+        return service.findAll(pageable).map(BookResponse::from);// 책 목록을 조회하고, 페이지 정보는 그대로 두고 각 책을 응답 DTO로 바꾼다
     }
 
     @GetMapping("/{id}")
